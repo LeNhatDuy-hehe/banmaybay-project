@@ -6,6 +6,8 @@ from hud import Hud
 import sys
 import os
 import random
+from item import drop_item, Item
+
 
 pygame.init()
 man_hinh = pygame.display.set_mode((rong, cao))
@@ -113,6 +115,7 @@ def start_game():
     tatca_sprites = pygame.sprite.Group()
     dichs = pygame.sprite.Group()
     dan_nguoi_choi = pygame.sprite.Group()
+    items = pygame.sprite.Group()
 
     # Máy bay người chơi
     may_bay = Player(rong // 2, cao - 80, 5, dan_nguoi_choi)
@@ -165,11 +168,23 @@ def start_game():
             tatca_sprites.add(new_enemy)
             dichs.add(new_enemy)
 
+             # === Thử rơi item tại vị trí enemy vừa chết ===
+            item = drop_item(hit.rect.centerx, hit.rect.centery, cao)
+            if item:
+                items.add(item)
+                tatca_sprites.add(item)
+
         # Địch va chạm máy bay
         hits = pygame.sprite.spritecollide(may_bay, dichs, True)
         for hit in hits:
             may_bay.tim -= 1
-            # spawn lại enemy mới
+
+        # Giảm level súng khi mất 1 tim
+            if may_bay.sung_level > 1:
+                may_bay.sung_level -= 1
+                print(f"Mất 1 tim → súng giảm còn Level {may_bay.sung_level}")
+
+         # spawn lại enemy mới
             x = random.randint(20, rong - 20)
             y = random.randint(-600, -40)
             speed = random.randint(2, 5)
@@ -178,10 +193,28 @@ def start_game():
             dichs.add(new_enemy)
 
             if may_bay.tim <= 0:
-                if game_over_screen(hud.score):  # truyền điểm hiện tại
+                if game_over_screen(hud.score):
                     return start_game()
                 else:
                     running = False
+
+
+                # Player nhặt vật phẩm
+        collected = pygame.sprite.spritecollide(may_bay, items, True)
+        for item in collected:
+            if item.type == "hp":
+                if may_bay.tim < 3:   # giới hạn max 3 tim
+                    may_bay.tim += 1
+                    print(f"Thêm tim, hiện tại: {may_bay.tim}")
+                else:
+                    print("Đã đủ 3 tim, không cộng thêm.")
+
+            elif item.type == "power":
+                if may_bay.sung_level < 5:   # giới hạn max 5 level
+                    may_bay.sung_level += 1
+                    print(f"Súng nâng cấp: Level {may_bay.sung_level}")
+
+
                           
         # Vẽ sprite + HUD
         tatca_sprites.draw(man_hinh)
@@ -193,6 +226,6 @@ def start_game():
 
 while True:
     if main_menu():         # menu → chơi
-        if not start_game():  # nếu thua
+        if start_game():  # nếu thua
             if not game_over_screen():
                 break

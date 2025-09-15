@@ -16,8 +16,11 @@ class Player(pygame.sprite.Sprite):
         self.dan_group = dan_group
 
         # Cooldown bắn
-        self.cooldown = 300  # mili giây giữa 2 lần bắn (nhanh hơn một chút)
+        self.cooldown = 300  # mili giây giữa 2 lần bắn
         self.last_shot = pygame.time.get_ticks()
+
+        # Level súng
+        self.sung_level = 1   # bắt đầu 1 tia
 
     def update(self):
         keys = pygame.key.get_pressed()
@@ -35,6 +38,19 @@ class Player(pygame.sprite.Sprite):
         now = pygame.time.get_ticks()
         if now - self.last_shot > self.cooldown:
             self.last_shot = now
-            # Tạo viên đạn xuất phát từ mũi máy bay
-            bullet = Bullet(self.rect.centerx, self.rect.top)
-            self.dan_group.add(bullet)
+
+            # Bắn theo cấp độ súng
+            if self.sung_level == 1:
+                bullet = Bullet(self.rect.centerx, self.rect.top)
+                self.dan_group.add(bullet)
+
+            elif self.sung_level == 2:
+                bullet1 = Bullet(self.rect.centerx - 10, self.rect.top)
+                bullet2 = Bullet(self.rect.centerx + 10, self.rect.top)
+                self.dan_group.add(bullet1, bullet2)
+
+            elif self.sung_level >= 3:
+                bullet1 = Bullet(self.rect.centerx, self.rect.top)
+                bullet2 = Bullet(self.rect.centerx - 15, self.rect.top)
+                bullet3 = Bullet(self.rect.centerx + 15, self.rect.top)
+                self.dan_group.add(bullet1, bullet2, bullet3)
