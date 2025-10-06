@@ -6,7 +6,6 @@ from hud import Hud
 import sys
 import os
 import random
-from item import drop_item, Item
 
 
 pygame.init()
@@ -18,12 +17,11 @@ dong_ho = pygame.time.Clock()
 current_path = os.path.dirname(__file__)
 background_path = os.path.join(current_path, "..", "assets", "image", "scrollbackground", "scroll_background.png")
 
-# Load ảnh nền
+# Load ảnh nền cuộn
 background = pygame.image.load(background_path)
 background = pygame.transform.scale(background, (rong, cao))
 
 
-# ===================== MENU =====================
 def main_menu():
     # Nhạc menu
     menu_music = os.path.join(current_path, "..", "assets", "sound", "endgame", "Endgame.wav")
@@ -31,9 +29,9 @@ def main_menu():
     pygame.mixer.music.play(-1)
 
     # Load ảnh nền menu
-    bg_path = os.path.join(current_path, "..", "assets", "image", "scrollbackground", "backgroundmenu.jpg")
-    background_menu = pygame.image.load(bg_path).convert_alpha()
-    background_menu = pygame.transform.scale(background_menu, (rong, cao))
+    #bg_path = os.path.join(current_path, "..", "assets", "image", "scrollbackground", "backgroundmenu.jpg")
+    #background_menu = pygame.image.load(bg_path).convert_alpha()
+    #background_menu = pygame.transform.scale(background_menu, (rong, cao))
 
     font = pygame.font.SysFont("Arial", 48, bold=True)
     title_text = font.render("PLANE SHOOTER", True, (255, 215, 0))
@@ -45,11 +43,12 @@ def main_menu():
     exit_rect = exit_text.get_rect(center=(rong // 2, cao // 2 + 80))
 
     while True:
-        man_hinh.blit(background_menu, (0, 0))  # Vẽ ảnh nền
+        #man_hinh.blit(background_menu, (0, 0))
         man_hinh.blit(title_text, title_rect)
         man_hinh.blit(play_text, play_rect)
         man_hinh.blit(exit_text, exit_rect)
         pygame.display.flip()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -68,12 +67,11 @@ def game_over_screen(score):
     pygame.mixer.music.load(gameover_music)
     pygame.mixer.music.play(-1)
 
-    ## Load ảnh game over (logo)
-    bg_path = os.path.join(current_path, "..", "assets", "image", "endgame", "game_over.png")
-    gameover_img = pygame.image.load(bg_path).convert_alpha()
-    gameover_img = pygame.transform.scale(gameover_img, (400, 200))  # logo vừa phải
-    gameover_rect = gameover_img.get_rect(center=(rong // 2, cao // 2 - 150))
-
+    #Load ảnh nền game over
+    #bg_path = os.path.join(current_path, "..", "assets", "image", "endgame", "game_over.png")
+    #gameover_img = pygame.image.load(bg_path).convert_alpha()
+    #gameover_img = pygame.transform.scale(gameover_img, (400, 200))
+    #gameover_rect = gameover_img.get_rect(center=(rong // 2, cao // 2 - 150))
 
     font_big = pygame.font.SysFont("Arial", 64, bold=True)
     font_small = pygame.font.SysFont("Arial", 36)
@@ -87,7 +85,7 @@ def game_over_screen(score):
     exit_rect = exit_text.get_rect(center=(rong // 2, cao // 2 + 80))
 
     while True:
-        man_hinh.blit(gameover_img, gameover_rect)
+        #man_hinh.blit(gameover_img, gameover_rect)
         man_hinh.blit(score_text, score_rect)
         man_hinh.blit(retry_text, retry_rect)
         man_hinh.blit(exit_text, exit_rect)
@@ -99,12 +97,12 @@ def game_over_screen(score):
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if retry_rect.collidepoint(event.pos):
-                    return True   # chơi lại
+                    return True
                 if exit_rect.collidepoint(event.pos):
                     pygame.quit()
                     sys.exit()
 
-    
+
 def start_game():
     # Nhạc gameplay
     music_path = os.path.join(current_path, "..", "assets", "sound", "BackgroundMusic", "awestruck.wav")
@@ -115,7 +113,6 @@ def start_game():
     tatca_sprites = pygame.sprite.Group()
     dichs = pygame.sprite.Group()
     dan_nguoi_choi = pygame.sprite.Group()
-    items = pygame.sprite.Group()
 
     # Máy bay người chơi
     may_bay = Player(rong // 2, cao - 80, 5, dan_nguoi_choi)
@@ -149,7 +146,7 @@ def start_game():
         tatca_sprites.update()
         dan_nguoi_choi.update()
 
-        # Vẽ nền cuộn
+        # Nền cuộn
         man_hinh.blit(background, (0, bg_y))
         man_hinh.blit(background, (0, bg_y - cao))
         bg_y += bg_speed
@@ -160,7 +157,7 @@ def start_game():
         hits = pygame.sprite.groupcollide(dan_nguoi_choi, dichs, True, True)
         for hit in hits:
             hud.cong_diem(10)
-            # spawn lại enemy mới
+            # Spawn lại enemy mới
             x = random.randint(20, rong - 20)
             y = random.randint(-600, -40)
             speed = random.randint(2, 5)
@@ -168,23 +165,15 @@ def start_game():
             tatca_sprites.add(new_enemy)
             dichs.add(new_enemy)
 
-             # === Thử rơi item tại vị trí enemy vừa chết ===
-            item = drop_item(hit.rect.centerx, hit.rect.centery, cao)
-            if item:
-                items.add(item)
-                tatca_sprites.add(item)
-
         # Địch va chạm máy bay
         hits = pygame.sprite.spritecollide(may_bay, dichs, True)
         for hit in hits:
             may_bay.tim -= 1
-
-        # Giảm level súng khi mất 1 tim
             if may_bay.sung_level > 1:
                 may_bay.sung_level -= 1
                 print(f"Mất 1 tim → súng giảm còn Level {may_bay.sung_level}")
 
-         # spawn lại enemy mới
+            # Spawn lại enemy mới
             x = random.randint(20, rong - 20)
             y = random.randint(-600, -40)
             speed = random.randint(2, 5)
@@ -198,24 +187,6 @@ def start_game():
                 else:
                     running = False
 
-
-                # Player nhặt vật phẩm
-        collected = pygame.sprite.spritecollide(may_bay, items, True)
-        for item in collected:
-            if item.type == "hp":
-                if may_bay.tim < 3:   # giới hạn max 3 tim
-                    may_bay.tim += 1
-                    print(f"Thêm tim, hiện tại: {may_bay.tim}")
-                else:
-                    print("Đã đủ 3 tim, không cộng thêm.")
-
-            elif item.type == "power":
-                if may_bay.sung_level < 5:   # giới hạn max 5 level
-                    may_bay.sung_level += 1
-                    print(f"Súng nâng cấp: Level {may_bay.sung_level}")
-
-
-                          
         # Vẽ sprite + HUD
         tatca_sprites.draw(man_hinh)
         dan_nguoi_choi.draw(man_hinh)
@@ -225,7 +196,7 @@ def start_game():
 
 
 while True:
-    if main_menu():         # menu → chơi
-        if start_game():  # nếu thua
+    if main_menu():
+        if start_game():
             if not game_over_screen():
                 break
